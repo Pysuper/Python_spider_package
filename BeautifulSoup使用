@@ -1,0 +1,201 @@
+import bs4
+from bs4 import BeautifulSoup
+
+# mac 电脑里面有些解析不了的页面,可以换个解析方式--html.parser
+
+
+html = """
+<html><head><title>The Dormouse's story</title></head>
+<body>
+<p class="title" name="dromouse"><b>The Dormouse's story</b></p>
+<p class="story">Once upon a time there were three little sisters; and their names were
+<a href="http://example.com/elsie" class="sister" id="link1"><!-- Elsie --></a>,
+<a href="http://example.com/lacie" class="sister" id="link2">Lacie</a> and
+<a href="http://example.com/tillie" class="sister" id="link3">Tillie</a>;
+and they lived at the bottom of a well.</p>
+<p class="story">...</p>
+"""
+soup = BeautifulSoup(html,'lxml')
+
+print(soup.find_all('a')[1])  # 打印所有的a标签
+print(soup.prettify())        # 格式化输出代码
+
+# 1/Tag－－HTML 中的一个个标签
+print(soup.title)             # 打印title标签
+print(soup.title.string)      # 打印title的内容
+print(soup.head)              # 打印head标签
+print(soup.head.title.string) # 打印head标签下的title标签内容
+print(soup.a)                 # 打印第一个a标签
+print(soup.p)
+##(soup.name)
+# print(soup.head.name)         # 打印head标签的标签名
+# print(soup.p.attrs)           # 获取p标签的所有属性
+# print(soup.p['class'])        # 单独获得p标签的某一个属性
+# print(soup.p.get('class'))    # 同上述方法一样，通过get()获取单个属性
+# soup.p['class']="newClass"    # 修改p标签的class属性值
+# del soup.p['class']           # 删除p标签的class属性
+
+# 2/NavigableString
+# print(soup.p.string)          # 获取p标签的内容
+
+## BeautifulSoup
+
+# 3/Comment
+# 首先判断了它的类型，是否为 Comment 类型，然后再进行其他操作，如打印输出
+# if type(soup.a.string) == bs4.element.Comment:
+    # print(soup.a.string)
+
+# 4/遍历文档树
+# 1直接子节点
+# print(soup.head.contents[0])  # tag的.contents属性可以将tag的子节点以列表的方式输出
+
+# for child in  soup.body.children:
+    # print(child)              # .children是一个list生成器对象,可以通过遍历获取所有子节点
+
+# 2所有子节点
+# .descendants属性可以对所有tag的子孙节点进行--递归--循环
+# for child in soup.descendants:
+    # print(child)
+
+# 3节点内容
+# 如果一个标签里面没有标签了，那么.string就会返回标签内容;如果标签里面只有唯一的一个标签了，那么.string也会返回最里面的内容
+# 否则会返回None
+# print(soup.title.string)
+# print(soup.html.string)
+
+# 多个内容
+# .strings:获取多个内容，不过需要遍历获取
+# for string in soup.strings:
+    # print(repr(string))
+
+# .stripped_strings:输出的字符串中可能包含了很多空格或空行,使用 .stripped_strings 可以去除多余空白内容
+# for string in soup.stripped_strings:
+    # print(repr(string))
+
+# 5父节点
+# p = soup.p
+# print(p.parent.name)  # 这里的p有两个，所以先将soup.p赋值出来
+
+# content = soup.head.title.string
+# print(content.parent.name)
+
+# 6全部父节点:通过元素的 .parents 属性可以递归得到元素的所有父辈节点
+# content = soup.head.title.string
+# for parent in  content.parents:
+    # print(parent.name)
+
+# 7兄弟节点
+# 注意：实际文档中的tag的 .next_sibling 和 .previous_sibling 属性通常是字符串或空白
+# 因为空白或者换行也可以被视作一个节点，所以得到的结果可能是空白或者换行
+# print soup.p.next_sibling #       实际该处为空白
+# print soup.p.prev_sibling # None   没有前一个兄弟节点，返回 None
+# print soup.p.next_sibling.next_sibling
+
+# 8全部兄弟节点--.next_siblings 和 .previous_siblings 属性可以对当前节点的兄弟节点迭代输出
+# for sibling in soup.a.next_siblings:
+    # print(repr(sibling))
+
+# 9前后节点--与.next_sibling,.previous_sibling不同,它并不是针对于兄弟节点,而是在所有节点,不分层次
+# print(soup.head.next_element)
+
+# 10所有前后节点--通过.next_elements和.previous_elements的迭代器就可以向前或向后访问文档的解析内容,就好像文档正在被解析一样
+# for element in last_a_tag.next_elements:
+    # print(repr(element))
+
+# 5/搜索文档树
+# 1）name 参数
+# A.传字符串
+# print(soup.find_all('a'))     # 查找所有a标签
+
+# B.传正则表达式
+# 找出所有以b开头的标签,这表示<body>和<b>标签都应该被找到
+# import re
+# for tag in soup.find_all(re.compile("^b")):
+    # print(tag.name)
+
+# C.传列表
+# 找到文档中所有<a>标签和<b>标签
+# soup.find_all(["a", "b"])
+
+# D.传 True
+# True 可以匹配任何值,下面代码查找到所有的tag,但是不会返回字符串节点
+# for tag in soup.find_all(True):
+#     print(tag.name)
+
+# E.传方法
+# 校验了当前元素,如果包含 class 属性却不包含 id 属性,那么将返回 True
+# def has_class_but_no_id(tag):
+#     return tag.has_attr('class') and not tag.has_attr('id')
+# 将这个方法作为参数传入 find_all() 方法,将得到所有<p>标签
+# soup.find_all(has_class_but_no_id)
+
+# 2）keyword 参数
+# 注意：如果一个指定名字的参数不是搜索内置的参数名,搜索时会把该参数当作指定名字tag的属性来搜索
+# 如果包含一个名字为 id 的参数,Beautiful Soup会搜索每个tag的”id”属性
+# soup.find_all(id='link2')
+
+# 如果传入 href 参数,Beautiful Soup会搜索每个tag的”href”属性
+# soup.find_all(href=re.compile("elsie"))
+
+# 使用多个指定名字的参数可以同时过滤tag的多个属性
+# soup.find_all(href=re.compile("elsie"), id='link1')
+
+# 在这里我们想用 class 过滤，不过 class 是 python 的关键词，这怎么办？加个下划线就可以
+# soup.find_all("a", class_="sister")
+
+# 有些tag属性在搜索不能使用,比如HTML5中的 data-* 属性
+# data_soup = BeautifulSoup('<div data-foo="value">foo!</div>')
+# data_soup.find_all(data-foo="value")
+
+# 但是可以通过 find_all() 方法的 attrs 参数定义一个字典参数来搜索包含特殊属性的
+# tagdata_soup.find_all(attrs={"data-foo": "value"})
+
+# 3）text 参数
+# 通过 text 参数可以搜搜文档中的字符串内容.与 name 参数的可选值一样, text 参数接受 字符串 , 正则表达式 , 列表, True
+# soup.find_all(text="Elsie")
+# soup.find_all(text=["Tillie", "Elsie", "Lacie"])
+# soup.find_all(text=re.compile("Dormouse"))
+
+# 4）limit 参数
+# 文档树中有3个tag符合搜索条件,但结果只返回了2个,因为我们限制了返回数量
+# soup.find_all("a", limit=2)
+
+# 5）recursive 参数
+# 调用tag的find_all()方法时,Beautiful Soup会检索当前tag的所有子孙节点,如果只想搜索tag的直接子节点,可以使用参数recursive=False
+# soup.html.find_all("title")
+# soup.html.find_all("title", recursive=False)
+
+
+# CSS选择器
+# 1）通过标签名查找
+# print(soup.select('title'))
+# print(soup.select('a'))
+# print(soup.select('b'))
+
+# 2）通过类名查找
+# print(soup.select('.sister'))
+
+# 3）通过 id 名查找
+# print(soup.select('#link1'))
+
+# 4）组合查找
+# print(soup.select('p #link1'))
+# 直接子标签查找
+# print(soup.select("head > title"))
+
+# 5）属性查找
+# 查找时还可以加入属性元素，属性需要用中括号括起来，注意属性和标签属于同一节点，所以中间不能加空格，否则会无法匹配到
+# print(soup.select('a[class="sister"]'))
+# print(soup.select('a[href="http://example.com/elsie"]'))
+
+# 属性仍然可以与上述查找方式组合，不在同一节点的空格隔开，同一节点的不加空格
+# print soup.select('p a[href="http://example.com/elsie"]')
+
+#  select 方法返回的结果都是列表形式，可以遍历形式输出，然后用 get_text() 方法来获取它的内容
+# soup = BeautifulSoup(html, 'lxml')
+# print type(soup.select('title'))
+# print soup.select('title')[0].get_text()
+#
+# for title in soup.select('title'):
+#     print title.get_text()
+
